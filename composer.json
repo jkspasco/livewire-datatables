@@ -1,5 +1,5 @@
 {
-    "name": "arm092/livewire-datatables",
+    "name": "jkspasco/livewire-datatables",
     "description": "Advanced datatables using Laravel, Livewire, Tailwind CSS and Alpine JS",
     "keywords": [
         "php",
@@ -8,7 +8,7 @@
         "datatables",
         "tall"
     ],
-    "homepage": "https://github.com/arm092/livewire-datatables",
+    "homepage": "https://github.com/jkspasco/livewire-datatables",
     "license": "MIT",
     "type": "library",
     "authors": [
