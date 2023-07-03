@@ -2,6 +2,7 @@
 
 namespace Mediconesystems\LivewireDatatables\Http\Livewire;
 
+use App\Models\ORHead;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -86,13 +87,17 @@ class LivewireDatatable extends Component
 
     protected $query;
     protected $listeners = [
+        'buildNewDatabaseQuery',
         'refreshLivewireDatatable',
         'complexQuery',
         'saveQuery',
         'deleteQuery',
         'applyToTable',
         'resetTable',
+        'filterTable',
         'doTextFilter',
+        'doDateFilterStart',
+        'doDateFilterEnd',
         'toggleGroup',
     ];
 
@@ -192,6 +197,24 @@ class LivewireDatatable extends Component
      * Call to clear all searches, filters, selections, return to page 1 and set perPage to default.
      */
     public function resetTable()
+    {
+        $this->perPage = config('livewire-datatables.default_per_page', 10);
+        $this->sort = $this->defaultSort();
+        $this->search = null;
+        $this->setPage(1);
+        $this->activeSelectFilters = [];
+        $this->activeDateFilters = [];
+        $this->activeDatetimeFilters = [];
+        $this->activeTimeFilters = [];
+        $this->activeTextFilters = [];
+        $this->activeBooleanFilters = [];
+        $this->activeNumberFilters = [];
+        $this->hide = null;
+        $this->resetHiddenColumns();
+        $this->selected = [];
+    }
+
+    public function filterTable()
     {
         $this->perPage = config('livewire-datatables.default_per_page', 10);
         $this->sort = $this->defaultSort();
@@ -911,28 +934,31 @@ class LivewireDatatable extends Component
 
     public function doTextFilter($index, $value)
     {
+        $this->activeTextFilters = [];
         foreach (explode(' ', $value) as $val) {
             $this->activeTextFilters[$index][] = $val;
         }
         $this->setVisibleSelected();
         $this->setPage(1);
-        $this->setSessionStoredFilters();
+        // $this->setSessionStoredFilters();
     }
 
     public function doDateFilterStart($index, $start)
     {
+        $this->activeDateFilters[$index]['start'] = [];
         $this->activeDateFilters[$index]['start'] = $start;
         $this->setVisibleSelected();
         $this->setPage(1);
-        $this->setSessionStoredFilters();
+        // $this->setSessionStoredFilters();
     }
 
     public function doDateFilterEnd($index, $end)
     {
+        $this->activeDateFilters[$index]['end'] = [];
         $this->activeDateFilters[$index]['end'] = $end;
         $this->setVisibleSelected();
         $this->setPage(1);
-        $this->setSessionStoredFilters();
+        // $this->setSessionStoredFilters();
     }
 
     public function doDatetimeFilterStart($index, $start)
@@ -1247,6 +1273,39 @@ class LivewireDatatable extends Component
         if (isset($this->pinnedRecors)) {
             $this->applyPinnedRecords();
         }
+    }
+
+    public function buildNewDatabaseQuery($export = false, $branchCode, $dateFrom, $dateTo)
+    {
+        $this->query = $this->builder()->where('BranchCode',$branchCode)->whereBetween('TranData',[$dateFrom,$dateTo]);
+        // $this->query = $this->builder();
+        // dd($this->query);
+
+        $this->tablePrefix = $this->query->getConnection()->getTablePrefix() ?? '';
+
+        $this->query->addSelect(
+            $this->getSelectStatements(true, $export)
+            ->filter()
+            ->flatten()
+            ->toArray()
+        );
+
+        $this->addGlobalSearch()
+            ->addScopeColumns()
+            ->addSelectFilters()
+            ->addBooleanFilters()
+            ->addTextFilters()
+            ->addNumberFilters()
+            ->addDateRangeFilter()
+            ->addDatetimeRangeFilter()
+            ->addTimeRangeFilter()
+            ->addComplexQuery()
+            ->addSort();
+
+        if (isset($this->pinnedRecors)) {
+            $this->applyPinnedRecords();
+        }
+        $this->render();
     }
 
     public function complexQuery($rules)
@@ -1738,13 +1797,16 @@ class LivewireDatatable extends Component
                 return $query->havingRaw('checkbox_attribute IN (' . implode(',', $this->selected) . ')');
             })->get(),
             true
-        )->map(function ($item) {
-            return collect($this->columns())->reject(function ($value, $key) {
-                return $value->preventExport == true || $value->hidden == true;
-            })->mapWithKeys(function ($value, $key) use ($item) {
-                return [$value->label ?? $value->name => $item->{$value->name}];
-            })->all();
-        });
+        );
+        // ->map(function ($item) {
+        //     return collect($this->columns())
+            // ->reject(function ($value, $key) {
+            //     return $value->preventExport == true || $value->hidden == true;
+            // })->mapWithKeys(function ($value, $key) use ($item) {
+            //     return [$value->label ?? $value->name => $item->{$value->name}];
+            // })
+        //     ->all();
+        // });
     }
 
     public function getQuery($export = false)
