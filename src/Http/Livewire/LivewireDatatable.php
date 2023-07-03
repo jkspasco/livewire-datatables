@@ -2,7 +2,6 @@
 
 namespace Mediconesystems\LivewireDatatables\Http\Livewire;
 
-use App\Models\ORHead;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
