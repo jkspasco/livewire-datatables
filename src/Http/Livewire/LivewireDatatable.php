@@ -2,6 +2,7 @@
 
 namespace Mediconesystems\LivewireDatatables\Http\Livewire;
 
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -1704,6 +1705,9 @@ class LivewireDatatable extends Component
                 } elseif (isset($this->callbacks[$name]) && is_callable($this->callbacks[$name])) {
                     $row->$name = $this->callbacks[$name]($value, $row);
                 }
+                elseif(is_null($value)){
+                    $row->$name = 'null';
+                }
             }
 
             return $row;
@@ -1781,10 +1785,11 @@ class LivewireDatatable extends Component
 
     public function export(string $filename = 'DatatableExport.xlsx')
     {
+        $exportedFilename = $this->name.' '.Carbon::now()->format('d-m-Y-Hi').'.xlsx';
         $this->forgetComputed();
 
         $export = new DatatableExport($this->getExportResultsSet());
-        $export->setFilename($filename);
+        $export->setFilename($exportedFilename);
 
         return $export->download();
     }
@@ -1796,16 +1801,17 @@ class LivewireDatatable extends Component
                 return $query->havingRaw('checkbox_attribute IN (' . implode(',', $this->selected) . ')');
             })->get(),
             true
-        );
-        // ->map(function ($item) {
-        //     return collect($this->columns())
+        )
+        ->map(function ($item) {
+            return collect($this->columns())
             // ->reject(function ($value, $key) {
             //     return $value->preventExport == true || $value->hidden == true;
-            // })->mapWithKeys(function ($value, $key) use ($item) {
-            //     return [$value->label ?? $value->name => $item->{$value->name}];
             // })
-        //     ->all();
-        // });
+            ->mapWithKeys(function ($value, $key) use ($item) {
+                return [$value->label ?? $value->name => $item->{$value->name}];
+            })
+            ->all();
+        });
     }
 
     public function getQuery($export = false)
