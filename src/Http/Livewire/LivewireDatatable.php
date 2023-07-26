@@ -1191,10 +1191,6 @@ class LivewireDatatable extends Component
         );
     }
 
-    public function loadTable(){
-        $this->displayData = $this->results;
-    }
-
     public function getSelectFiltersProperty()
     {
         return collect($this->freshColumns)->filter->selectFilter;
