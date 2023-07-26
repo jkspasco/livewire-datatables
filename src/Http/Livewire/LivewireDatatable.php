@@ -20,6 +20,7 @@ use Mediconesystems\LivewireDatatables\Exports\DatatableExport;
 use Mediconesystems\LivewireDatatables\Traits\WithCallbacks;
 use Mediconesystems\LivewireDatatables\Traits\WithPresetDateFilters;
 use Mediconesystems\LivewireDatatables\Traits\WithPresetTimeFilters;
+use stdClass;
 
 class LivewireDatatable extends Component
 {
@@ -69,6 +70,8 @@ class LivewireDatatable extends Component
     public $persistFilters = true;
     public $visibleSelected = [];
     public $row = 1;
+
+    protected $displayData = [];
 
     public $tablePrefix = '';
 
@@ -793,7 +796,9 @@ class LivewireDatatable extends Component
     public function summarize($column)
     {
         try {
-            return $this->results->sum($column);
+            $result = new stdClass();
+            $result = collect($this->displayData);
+            return $result->sum($column);
         } catch (\TypeError $e) {
             return '';
         }
@@ -1186,6 +1191,10 @@ class LivewireDatatable extends Component
         );
     }
 
+    public function loadTable(){
+        $this->displayData = $this->results;
+    }
+
     public function getSelectFiltersProperty()
     {
         return collect($this->freshColumns)->filter->selectFilter;
@@ -1273,39 +1282,6 @@ class LivewireDatatable extends Component
         if (isset($this->pinnedRecors)) {
             $this->applyPinnedRecords();
         }
-    }
-
-    public function buildNewDatabaseQuery($export = false, $branchCode, $dateFrom, $dateTo)
-    {
-        $this->query = $this->builder()->where('BranchCode',$branchCode)->whereBetween('TranData',[$dateFrom,$dateTo]);
-        // $this->query = $this->builder();
-        // dd($this->query);
-
-        $this->tablePrefix = $this->query->getConnection()->getTablePrefix() ?? '';
-
-        $this->query->addSelect(
-            $this->getSelectStatements(true, $export)
-            ->filter()
-            ->flatten()
-            ->toArray()
-        );
-
-        $this->addGlobalSearch()
-            ->addScopeColumns()
-            ->addSelectFilters()
-            ->addBooleanFilters()
-            ->addTextFilters()
-            ->addNumberFilters()
-            ->addDateRangeFilter()
-            ->addDatetimeRangeFilter()
-            ->addTimeRangeFilter()
-            ->addComplexQuery()
-            ->addSort();
-
-        if (isset($this->pinnedRecors)) {
-            $this->applyPinnedRecords();
-        }
-        $this->render();
     }
 
     public function complexQuery($rules)
