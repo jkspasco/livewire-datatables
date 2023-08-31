@@ -1762,14 +1762,23 @@ class LivewireDatatable extends Component
         return view('datatables::datatable');
     }
 
-    public function export(string $filename = 'DatatableExport.xlsx')
+    public function export($exportType, string $filename = 'DatatableExport.xlsx')
     {
-        $exportedFilename = $this->name . ' ' . Carbon::now()->format('d-m-Y-Hi') . '.xlsx';
+        if ($exportType == 'excel') {
+            $exportedFilename = $this->name . ' ' . Carbon::now()->format('d-m-Y-Hi') . '.xlsx';
 
-        $export = new DatatableExport($this->getExportResultsSet());
-        $export->setFilename($exportedFilename);
+            $export = new DatatableExport($this->getExportResultsSet());
+            $export->setFilename($exportedFilename);
 
-        return $export->download();
+            return $export->download();
+        } else if ($exportType == 'csv') {
+            $exportedFilename = $this->name . ' ' . Carbon::now()->format('d-m-Y-Hi') . '.csv';
+
+            $export = new DatatableExport($this->getExportResultsSet());
+            $export->setFilename($exportedFilename);
+
+            return $export->download();
+        }
     }
 
     public function getExportResultsSet()
