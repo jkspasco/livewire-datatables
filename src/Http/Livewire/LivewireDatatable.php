@@ -221,7 +221,7 @@ class LivewireDatatable extends Component
     {
         return <<<'HTML'
         <div class="w-full cursor-wait h-64 rounded bg-white animate-pulse p-4 flex items-center justify-center mt-3">
-        <span class="dayzloading dayzloading-bars w-64"></span>
+        <span class="dayzloading dayzloading-bars text-info dayzloading-lg"></span>
         </div>
         HTML;
     }
